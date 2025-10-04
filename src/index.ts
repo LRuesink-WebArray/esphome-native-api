@@ -57,8 +57,8 @@ export {
   // Log types
   LogEntry,
   LogLevel,
-  Logger,  // Custom logger interface
-  TimerFactory,  // Custom timer interface
+  Logger, // Custom logger interface
+  TimerFactory, // Custom timer interface
 
   // Message types
   MessageType,

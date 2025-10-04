@@ -32,8 +32,8 @@ export interface ConnectionOptions {
   connectTimeout?: number;
   encryptionKey?: string;
   expectedServerName?: string;
-  logger?: Logger;  // Custom logger function (e.g., for Homey integration)
-  timerFactory?: TimerFactory;  // Custom timer implementation (e.g., for Homey integration)
+  logger?: Logger; // Custom logger function (e.g., for Homey integration)
+  timerFactory?: TimerFactory; // Custom timer implementation (e.g., for Homey integration)
 }
 
 export interface DeviceInfo {

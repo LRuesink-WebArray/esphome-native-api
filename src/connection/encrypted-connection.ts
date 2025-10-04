@@ -45,7 +45,9 @@ export class EncryptedConnection extends EventEmitter {
     connected: false,
     authenticated: false,
   };
-  private options: Required<Omit<ConnectionOptions, 'logger'>> & { logger?: ConnectionOptions['logger'] };
+  private options: Required<Omit<ConnectionOptions, 'logger'>> & {
+    logger?: ConnectionOptions['logger'];
+  };
   private isDestroyed = false;
 
   constructor(options: ConnectionOptions) {
@@ -64,13 +66,17 @@ export class EncryptedConnection extends EventEmitter {
       expectedServerName: options.expectedServerName || '',
       logger: options.logger,
     };
-    
+
     // Initialize noise encryption if key is provided
     if (this.options.encryptionKey) {
       this._noise = new NoiseEncryption(this.options.encryptionKey);
-      debug('Encryption will be initialized for connection to %s:%d', this.options.host, this.options.port);
+      debug(
+        'Encryption will be initialized for connection to %s:%d',
+        this.options.host,
+        this.options.port,
+      );
     }
-    
+
     debug('Encrypted connection initialized for %s:%d', this.options.host, this.options.port);
   }
 

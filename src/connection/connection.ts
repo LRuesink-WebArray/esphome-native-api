@@ -34,7 +34,7 @@ export class Connection extends EventEmitter<ConnectionEvents> {
     connected: false,
     authenticated: false,
   };
-  private options: Required<Omit<ConnectionOptions, 'logger' | 'timerFactory'>> & { 
+  private options: Required<Omit<ConnectionOptions, 'logger' | 'timerFactory'>> & {
     logger?: ConnectionOptions['logger'];
     timerFactory?: ConnectionOptions['timerFactory'];
   };

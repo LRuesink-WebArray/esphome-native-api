@@ -16,7 +16,7 @@ export function createLogger(namespace: string, customLogger?: Logger) {
       customLogger(namespace, message, ...args);
     };
   }
-  
+
   // Use standard debug package
   const debug = createDebug(namespace);
   return (message: string, ...args: any[]) => {
@@ -29,7 +29,8 @@ export function createLogger(namespace: string, customLogger?: Logger) {
  * Useful when you want to redirect all debug output
  */
 export function setupGlobalLogger(logFunction: (message: string) => void): void {
-  const debug = require('debug');
-  debug.log = logFunction;
-  debug.enable('esphome:*');
+  // Access the debug module instance through createDebug
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+  (createDebug as any).log = logFunction;
+  createDebug.enable('esphome:*');
 }
