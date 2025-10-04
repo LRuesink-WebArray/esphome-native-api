@@ -190,6 +190,15 @@ function main() {
   console.log('Writing to:', OUTPUT_FILE);
   fs.writeFileSync(OUTPUT_FILE, tsContent, 'utf-8');
   
+  console.log('\nFormatting with Prettier...');
+  try {
+    const { execSync } = require('child_process');
+    execSync(`npx prettier --write ${OUTPUT_FILE}`, { stdio: 'inherit' });
+    console.log('[OK] File formatted successfully');
+  } catch (error) {
+    console.log('[WARNING] Prettier formatting failed, but file was generated');
+  }
+  
   console.log('\n✓ Entity types generated successfully!');
   console.log('\nNext steps:');
   console.log('  1. Update src/types/index.ts to export from generated-entity-types.ts');

@@ -568,7 +568,7 @@ npm run test:coverage   # Run tests with coverage
 
 The library uses protocol buffers for communication. The proto files are pre-generated and committed to the repository.
 
-To update to the latest ESPHome protocol definitions:
+To update the proto files from ESPHome:
 
 ```bash
 npm run proto:generate
@@ -578,12 +578,20 @@ This automatically:
 - Downloads the latest proto files from ESPHome
 - Generates JavaScript and TypeScript code
 - Fixes the `void` keyword conflict (ESPHome uses `void` as a message name)
+- Formats the generated files with Prettier
+
+The generated files (`src/proto/api.js` and `src/proto/api.d.ts`) are:
+- Excluded from ESLint checks (in `.eslintignore`)
+- Excluded from Prettier checks (in `.prettierignore`)
+- Automatically formatted during generation
+
+This ensures automated proto updates (via GitHub Actions) won't cause linter failures.
 
 See `proto/README.md` for more details.
 
 ## Auto-Generated Entity Types
 
-Entity types are automatically generated from ESPHome's proto files, ensuring the library stays in sync with ESPHome updates:
+{{ ... }}
 
 ```typescript
 import { ALL_ENTITY_TYPES, isValidEntityType, EntityType } from 'esphome-native-api';

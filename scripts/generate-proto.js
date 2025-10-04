@@ -149,6 +149,15 @@ try {
   process.exit(1);
 }
 
+// Step 6: Format generated files with Prettier
+console.log('\nStep 6: Formatting generated files with Prettier...');
+try {
+  execSync(`npx prettier --write ${API_JS} ${API_DTS}`, { stdio: 'inherit' });
+  console.log('[OK] Files formatted successfully');
+} catch (error) {
+  console.log('[WARNING] Prettier formatting failed, but files were generated');
+}
+
 console.log('\n' + '═'.repeat(60));
 console.log('[SUCCESS] Proto generation complete!');
 console.log('\nGenerated files:');
