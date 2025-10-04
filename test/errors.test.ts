@@ -11,12 +11,9 @@ import {
 describe('Error Classes', () => {
   describe('ESPHomeError', () => {
     it('should create error with code and suggestion', () => {
-      const error = new ESPHomeError(
-        'Test error',
-        ErrorCode.UNKNOWN_ERROR,
-        'Test suggestion',
-        { key: 'value' },
-      );
+      const error = new ESPHomeError('Test error', ErrorCode.UNKNOWN_ERROR, 'Test suggestion', {
+        key: 'value',
+      });
 
       expect(error.message).toBe('Test error');
       expect(error.code).toBe(ErrorCode.UNKNOWN_ERROR);
@@ -31,12 +28,9 @@ describe('Error Classes', () => {
     });
 
     it('should format toString with all fields', () => {
-      const error = new ESPHomeError(
-        'Test error',
-        ErrorCode.NETWORK_ERROR,
-        'Try this',
-        { host: 'localhost' },
-      );
+      const error = new ESPHomeError('Test error', ErrorCode.NETWORK_ERROR, 'Try this', {
+        host: 'localhost',
+      });
 
       const str = error.toString();
       expect(str).toContain('ESPHomeError [NETWORK_ERROR]: Test error');

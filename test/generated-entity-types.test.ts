@@ -48,7 +48,7 @@ describe('Generated Entity Types', () => {
 
     it('should work as a type guard', () => {
       const type: string = 'sensor';
-      
+
       if (isValidEntityType(type)) {
         // TypeScript should narrow the type here
         const validType: EntityType = type;
@@ -94,7 +94,7 @@ describe('Generated Entity Types', () => {
       // The keys in both maps should be the same
       const typeMapKeys = Object.keys({} as EntityTypeMap);
       const stateMapKeys = Object.keys({} as EntityStateMap);
-      
+
       // This is a type-level test, verifying the structure exists
       expect(typeMapKeys).toBeDefined();
       expect(stateMapKeys).toBeDefined();
@@ -106,10 +106,10 @@ describe('Generated Entity Types', () => {
       const _binarySensorInfo: keyof EntityTypeMap = 'binary_sensor';
       const _sensorInfo: keyof EntityTypeMap = 'sensor';
       const _switchInfo: keyof EntityTypeMap = 'switch';
-      
+
       const _binarySensorState: keyof EntityStateMap = 'binary_sensor';
       const _sensorState: keyof EntityStateMap = 'sensor';
-      
+
       // These should compile without errors
       expect(_binarySensorInfo).toBe('binary_sensor');
       expect(_sensorInfo).toBe('sensor');
@@ -148,7 +148,7 @@ describe('Generated Entity Types', () => {
         'update',
       ];
 
-      expectedTypes.forEach(type => {
+      expectedTypes.forEach((type) => {
         expect(ALL_ENTITY_TYPES).toContain(type);
       });
     });
