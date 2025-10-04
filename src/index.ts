@@ -28,7 +28,7 @@ export {
   ConnectionState,
   HealthMetrics,
   ConnectionHealth,
-  
+
   // Error types
   ErrorCode,
   ESPHomeError,
@@ -78,7 +78,7 @@ export {
   // Message types
   MessageType,
   MessageHandler,
-  
+
   // TypeScript utility types
   EntityType,
   EntityTypeMap,

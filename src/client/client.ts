@@ -12,6 +12,7 @@ import {
   ConnectionOptions,
   DeviceInfo,
   EntityInfo,
+  EntityCategory,
   StateUpdate,
   BinarySensorState,
   SensorState,
@@ -365,7 +366,7 @@ export class ESPHomeClient extends EventEmitter<ClientEvents> {
   findEntity(nameOrId: string): EntityInfo | undefined {
     const entities = Array.from(this.entities.values());
     const search = nameOrId.toLowerCase();
-    
+
     return entities.find(
       (entity) =>
         entity.name.toLowerCase().includes(search) ||
@@ -382,7 +383,7 @@ export class ESPHomeClient extends EventEmitter<ClientEvents> {
   findEntities(searchTerm: string): EntityInfo[] {
     const entities = Array.from(this.entities.values());
     const search = searchTerm.toLowerCase();
-    
+
     return entities.filter(
       (entity) =>
         entity.name.toLowerCase().includes(search) ||
@@ -418,7 +419,7 @@ export class ESPHomeClient extends EventEmitter<ClientEvents> {
    */
   async waitForEntity(nameOrId: string, timeout: number = 30000): Promise<EntityInfo> {
     const search = nameOrId.toLowerCase();
-    
+
     // Check if entity already exists
     const existing = this.findEntity(search);
     if (existing) {
@@ -486,10 +487,10 @@ export class ESPHomeClient extends EventEmitter<ClientEvents> {
 
   /**
    * Get entities by category
-   * @param category - Entity category (NONE, CONFIG, DIAGNOSTIC)
+   * @param category - Entity category (EntityCategory.NONE, EntityCategory.CONFIG, or EntityCategory.DIAGNOSTIC)
    * @returns Array of entities in the specified category
    */
-  getEntitiesByCategory(category: number): EntityInfo[] {
+  getEntitiesByCategory(category: EntityCategory): EntityInfo[] {
     const entities = Array.from(this.entities.values());
     return entities.filter((entity) => entity.entityCategory === category);
   }
@@ -873,7 +874,7 @@ export class ESPHomeClient extends EventEmitter<ClientEvents> {
   getConnectionMetrics() {
     const health = this.getHealthMetrics();
     const state = this.connection.getState();
-    
+
     return {
       state,
       health,

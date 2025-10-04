@@ -140,14 +140,14 @@ export interface LogEntry {
 
 /**
  * ESPHome log levels matching the device's logging system
- * 
+ *
  * @example
  * ```typescript
  * import { LogLevel } from 'esphome-native-api';
- * 
+ *
  * // Subscribe to INFO level and above
  * client.subscribeLogs(LogLevel.INFO);
- * 
+ *
  * // Subscribe to DEBUG level for troubleshooting
  * client.subscribeLogs(LogLevel.DEBUG);
  * ```
@@ -173,13 +173,13 @@ export enum LogLevel {
 
 /**
  * Log level constants for convenient usage
- * 
+ *
  * These constants provide easier-to-use names for log levels.
- * 
+ *
  * @example
  * ```typescript
  * import { LOG_LEVEL_INFO, LOG_LEVEL_DEBUG } from 'esphome-native-api';
- * 
+ *
  * // Use constants instead of enum
  * client.subscribeLogs(LOG_LEVEL_INFO);
  * client.subscribeLogs(LOG_LEVEL_DEBUG);
@@ -370,23 +370,23 @@ export enum ErrorCode {
   CONNECTION_RESET = 'CONNECTION_RESET',
   CONNECTION_LOST = 'CONNECTION_LOST',
   NETWORK_ERROR = 'NETWORK_ERROR',
-  
+
   // Authentication errors
   INVALID_PASSWORD = 'INVALID_PASSWORD',
   INVALID_ENCRYPTION_KEY = 'INVALID_ENCRYPTION_KEY',
   AUTHENTICATION_REQUIRED = 'AUTHENTICATION_REQUIRED',
   AUTHENTICATION_FAILED = 'AUTHENTICATION_FAILED',
-  
+
   // Protocol errors
   PROTOCOL_VERSION_MISMATCH = 'PROTOCOL_VERSION_MISMATCH',
   INVALID_MESSAGE = 'INVALID_MESSAGE',
   HANDSHAKE_FAILED = 'HANDSHAKE_FAILED',
   UNEXPECTED_MESSAGE = 'UNEXPECTED_MESSAGE',
-  
+
   // Entity errors
   ENTITY_NOT_FOUND = 'ENTITY_NOT_FOUND',
   INVALID_ENTITY_STATE = 'INVALID_ENTITY_STATE',
-  
+
   // General errors
   TIMEOUT = 'TIMEOUT',
   INVALID_ARGUMENT = 'INVALID_ARGUMENT',
@@ -409,7 +409,7 @@ export class ESPHomeError extends Error {
     this.code = code;
     this.suggestion = suggestion;
     this.context = context;
-    
+
     // Maintain proper stack trace
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, this.constructor);
@@ -595,10 +595,7 @@ export type {
   AnyEntity,
 } from './generated-entity-types';
 
-export {
-  ALL_ENTITY_TYPES,
-  isValidEntityType,
-} from './generated-entity-types';
+export { ALL_ENTITY_TYPES, isValidEntityType } from './generated-entity-types';
 
 /**
  * Type guard to check if an entity is of a specific type
@@ -617,23 +614,20 @@ export function isEntityType<T extends import('./generated-entity-types').Entity
 /**
  * Type-safe entity filter result
  */
-export type EntitiesOfType<T extends import('./generated-entity-types').EntityType> = Array<import('./generated-entity-types').EntityInfoByType<T>>;
+export type EntitiesOfType<T extends import('./generated-entity-types').EntityType> = Array<
+  import('./generated-entity-types').EntityInfoByType<T>
+>;
 
 /**
  * Strongly typed connection options with strict validation
  */
-export type StrictConnectionOptions = Required<
-  Pick<ConnectionOptions, 'host'>
-> &
+export type StrictConnectionOptions = Required<Pick<ConnectionOptions, 'host'>> &
   Partial<Omit<ConnectionOptions, 'host'>>;
 
 /**
  * Extract keys from entity info that have specific types
  */
-export type EntityKeys = Pick<
-  EntityInfo,
-  'key' | 'objectId' | 'name' | 'uniqueId'
->;
+export type EntityKeys = Pick<EntityInfo, 'key' | 'objectId' | 'name' | 'uniqueId'>;
 
 /**
  * Make certain properties required
