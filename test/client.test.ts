@@ -439,7 +439,7 @@ describe('ESPHomeClient', () => {
   describe('Custom Options', () => {
     it('should accept custom logger option', () => {
       const customLogger = jest.fn();
-      
+
       const clientWithLogger = new ESPHomeClient({
         host: '192.168.1.100',
         logger: customLogger,

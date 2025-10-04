@@ -33,7 +33,7 @@ describe('TimerFactory', () => {
 
     it('should work with mock timer implementations', () => {
       const activeTimers = new Set<any>();
-      
+
       const mockTimerFactory: TimerFactory = {
         setTimeout: jest.fn((callback: any, ms: number) => {
           const id = global.setTimeout(callback, ms);
@@ -75,7 +75,7 @@ describe('TimerFactory', () => {
   describe('Custom Timer Behavior', () => {
     it('should allow tracking of all timers', () => {
       const timerLog: any[] = [];
-      
+
       const trackingTimerFactory: TimerFactory = {
         setTimeout: (callback: any, ms: number) => {
           const id = global.setTimeout(callback, ms);
@@ -104,7 +104,7 @@ describe('TimerFactory', () => {
 
       // Timer factory is available and can be used
       expect(client).toBeDefined();
-      
+
       client.destroy();
 
       // Timer factory was passed through (verified by no errors)
@@ -194,7 +194,7 @@ describe('TimerFactory', () => {
       });
 
       expect(client).toBeDefined();
-      
+
       // Timer factory is available
       expect(homeyTimerFactory.setTimeout).toBeDefined();
       expect(homeyTimerFactory.clearTimeout).toBeDefined();

@@ -13,7 +13,7 @@ describe('Logger Utilities', () => {
       };
 
       const logger = createLogger('test:namespace', customLogger);
-      
+
       logger('Test message', 'arg1', 'arg2');
 
       expect(messages).toHaveLength(1);
@@ -26,7 +26,7 @@ describe('Logger Utilities', () => {
 
     it('should create a logger with debug package when no custom logger provided', () => {
       const logger = createLogger('test:namespace');
-      
+
       // Should not throw
       expect(() => logger('Test message')).not.toThrow();
     });
@@ -38,7 +38,7 @@ describe('Logger Utilities', () => {
       };
 
       const logger = createLogger('test:multi', customLogger);
-      
+
       logger('Message with args', { key: 'value' }, 123, true);
 
       expect(messages[0].args).toEqual([{ key: 'value' }, 123, true]);
@@ -52,7 +52,7 @@ describe('Logger Utilities', () => {
 
       const logger1 = createLogger('namespace1', customLogger);
       const logger2 = createLogger('namespace2', customLogger);
-      
+
       logger1('From namespace 1');
       logger2('From namespace 2');
 
@@ -74,7 +74,7 @@ describe('Logger Utilities', () => {
 
     it('should accept any log function', () => {
       const mockLogger = jest.fn();
-      
+
       expect(() => setupGlobalLogger(mockLogger)).not.toThrow();
     });
   });

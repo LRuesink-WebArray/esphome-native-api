@@ -472,7 +472,7 @@ describe('Connection', () => {
 
       // Should have called setTimeout for connection timeout
       expect(customTimers.setTimeout).toHaveBeenCalled();
-      
+
       // Should have called clearTimeout after successful connection
       expect(customTimers.clearTimeout).toHaveBeenCalled();
 
@@ -487,7 +487,7 @@ describe('Connection', () => {
 
     it('should work without custom timer factory (default behavior)', async () => {
       const conn = new Connection(defaultOptions);
-      
+
       await conn.connect();
       expect(conn.isConnected()).toBe(true);
 
@@ -554,21 +554,21 @@ describe('Connection', () => {
       });
 
       await conn.connect();
-      
+
       // Clear previous calls
       customTimers.setTimeout.mockClear();
-      
+
       // Simulate disconnect
       const mockSocket = (Socket as any).mock.results[0].value;
       mockSocket.emit('close');
 
       // Wait a bit for reconnect timer to be set
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       // Should have called setTimeout for reconnection
       expect(customTimers.setTimeout).toHaveBeenCalled();
       const reconnectCall = customTimers.setTimeout.mock.calls.find(
-        (call: any) => call[1] === 100 // reconnectInterval
+        (call: any) => call[1] === 100, // reconnectInterval
       );
       expect(reconnectCall).toBeDefined();
 
