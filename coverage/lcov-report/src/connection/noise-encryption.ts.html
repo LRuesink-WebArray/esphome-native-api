@@ -297,22 +297,27 @@
 <a name='L232'></a><a href='#L232'>232</a>
 <a name='L233'></a><a href='#L233'>233</a>
 <a name='L234'></a><a href='#L234'>234</a>
-<a name='L235'></a><a href='#L235'>235</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L235'></a><a href='#L235'>235</a>
+<a name='L236'></a><a href='#L236'>236</a>
+<a name='L237'></a><a href='#L237'>237</a>
+<a name='L238'></a><a href='#L238'>238</a>
+<a name='L239'></a><a href='#L239'>239</a>
+<a name='L240'></a><a href='#L240'>240</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -335,7 +340,7 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">18x</span>
 <span class="cline-any cline-yes">18x</span>
@@ -394,6 +399,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -555,7 +565,7 @@ function loadNoise(): Promise&lt;any&gt; {
   if (globalNoiseInstance) {
     return Promise.resolve(globalNoiseInstance);
   }
-  
+&nbsp;
   if (!noiseLoadPromise) {
     noiseLoadPromise = new Promise((resolve) =&gt; {
       createNoise((noise: any) =&gt; {
@@ -565,7 +575,7 @@ function loadNoise(): Promise&lt;any&gt; {
       });
     });
   }
-  
+&nbsp;
   return noiseLoadPromise;
 }
 &nbsp;
@@ -596,25 +606,25 @@ export class NoiseEncryption {
     }
 &nbsp;
     const noise = await loadNoise();
-    
+&nbsp;
     try {
       // Create handshake state
       this.handshakeState = noise.HandshakeState(
         'Noise_NNpsk0_25519_ChaChaPoly_SHA256',
-        noise.constants.NOISE_ROLE_INITIATOR
+        noise.constants.NOISE_ROLE_INITIATOR,
       );
-      
+&nbsp;
       // Initialize with prologue and PSK
       // ESPHome uses "NoiseAPIInit\x00\x00" as prologue (with two null bytes)
       const prologue = Buffer.from('NoiseAPIInit\x00\x00');
-      
+&nbsp;
       this.handshakeState.Initialize(
         new Uint8Array(prologue),
-        null,  // s (static key) - not used in NN pattern
-        null,  // rs (remote static) - not used in NN pattern
-        new Uint8Array(this.encryptionKey)
+        null, // s (static key) - not used in NN pattern
+        null, // rs (remote static) - not used in NN pattern
+        new Uint8Array(this.encryptionKey),
       );
-      
+&nbsp;
       this.initialized = true;
       debug('Handshake state initialized successfully');
     } catch (error) {
@@ -627,8 +637,13 @@ export class NoiseEncryption {
    * Create the first handshake message (e)
    */
   createHandshakeMessage1(): Buffer {
-    debug('createHandshakeMessage1 called, initialized:', this.initialized, 'handshakeState:', this.handshakeState ? 'exists' : 'null');
-    
+    debug(
+      'createHandshakeMessage1 called, initialized:',
+      this.initialized,
+      'handshakeState:',
+      this.handshakeState ? 'exists' : 'null',
+    );
+&nbsp;
     if (!this.initialized || !this.handshakeState) {
       throw new Error('Not initialized. Call initialize() first.');
     }
@@ -656,17 +671,17 @@ export class NoiseEncryption {
 <span class="cstat-no" title="statement not covered" >    try {</span>
       // Read the response message
 <span class="cstat-no" title="statement not covered" >      this.handshakeState.ReadMessage(new Uint8Array(message), true);</span>
-      
+&nbsp;
       // Split into send and receive ciphers
       const [encryptor, decryptor] = <span class="cstat-no" title="statement not covered" >this.handshakeState.Split();</span>
 <span class="cstat-no" title="statement not covered" >      this.sendCipher = encryptor;</span>
 <span class="cstat-no" title="statement not covered" >      this.receiveCipher = decryptor;</span>
 <span class="cstat-no" title="statement not covered" >      this.handshakeComplete = true;</span>
-      
+&nbsp;
       // Don't free the handshake state immediately after Split() - it causes NOISE_ERROR_INVALID_PARAM
       // The handshakeState will be cleaned up when the NoiseEncryption instance is destroyed
 <span class="cstat-no" title="statement not covered" >      this.handshakeState = null;</span>
-      
+&nbsp;
 <span class="cstat-no" title="statement not covered" >      debug('Handshake complete, ciphers established');</span>
     } catch (error) {
 <span class="cstat-no" title="statement not covered" >      debug('Failed to process handshake message 2:', error);</span>
@@ -684,8 +699,8 @@ export class NoiseEncryption {
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    try {</span>
       const ciphertext = <span class="cstat-no" title="statement not covered" >this.sendCipher.EncryptWithAd(</span>
-        [],  // No associated data
-        new Uint8Array(plaintext)
+        [], // No associated data
+        new Uint8Array(plaintext),
       );
 <span class="cstat-no" title="statement not covered" >      return Buffer.from(ciphertext);</span>
     } catch (error) {
@@ -703,8 +718,8 @@ export class NoiseEncryption {
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    try {</span>
       const plaintext = <span class="cstat-no" title="statement not covered" >this.receiveCipher.DecryptWithAd(</span>
-        [],  // No associated data
-        new Uint8Array(ciphertext)
+        [], // No associated data
+        new Uint8Array(ciphertext),
       );
 <span class="cstat-no" title="statement not covered" >      return Buffer.from(plaintext);</span>
     } catch (error) {
@@ -772,7 +787,7 @@ export class NoiseEncryption {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-04T11:53:10.310Z
+                at 2025-10-04T16:11:29.712Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

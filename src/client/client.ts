@@ -344,6 +344,157 @@ export class ESPHomeClient extends EventEmitter<ClientEvents> {
   }
 
   /**
+   * Get all entities of a specific type
+   * @param type - Entity type filter (e.g., 'sensor', 'binary_sensor', 'switch')
+   * @returns Array of entities matching the type
+   */
+  getEntitiesByType(type: string): EntityInfo[] {
+    const entities = Array.from(this.entities.values());
+    return entities.filter((entity: any) => {
+      // Match by constructor name or inferred type
+      const constructorName = entity.constructor?.name?.toLowerCase() || '';
+      return constructorName.includes(type.toLowerCase().replace('_', ''));
+    });
+  }
+
+  /**
+   * Find entity by name or object ID
+   * @param nameOrId - Entity name or object ID to search for
+   * @returns First matching entity or undefined
+   */
+  findEntity(nameOrId: string): EntityInfo | undefined {
+    const entities = Array.from(this.entities.values());
+    const search = nameOrId.toLowerCase();
+    
+    return entities.find(
+      (entity) =>
+        entity.name.toLowerCase().includes(search) ||
+        entity.objectId.toLowerCase().includes(search) ||
+        entity.uniqueId?.toLowerCase().includes(search),
+    );
+  }
+
+  /**
+   * Find all entities matching a search term
+   * @param searchTerm - Search term to match against name, object ID, or unique ID
+   * @returns Array of matching entities
+   */
+  findEntities(searchTerm: string): EntityInfo[] {
+    const entities = Array.from(this.entities.values());
+    const search = searchTerm.toLowerCase();
+    
+    return entities.filter(
+      (entity) =>
+        entity.name.toLowerCase().includes(search) ||
+        entity.objectId.toLowerCase().includes(search) ||
+        entity.uniqueId?.toLowerCase().includes(search),
+    );
+  }
+
+  /**
+   * Get entity by key
+   * @param key - Entity key
+   * @returns Entity info or undefined if not found
+   */
+  getEntityByKey(key: number): EntityInfo | undefined {
+    return this.entities.get(key);
+  }
+
+  /**
+   * Get entity state by key (requires state subscription to be active)
+   * Note: This returns the last known state. Subscribe to states to receive updates.
+   * @param key - Entity key
+   * @returns Entity info for the key, or undefined if not found
+   */
+  getEntityInfo(key: number): EntityInfo | undefined {
+    return this.entities.get(key);
+  }
+
+  /**
+   * Wait for an entity to appear during discovery
+   * @param nameOrId - Entity name or object ID to wait for
+   * @param timeout - Timeout in milliseconds (default: 30000)
+   * @returns Promise that resolves with the entity info
+   */
+  async waitForEntity(nameOrId: string, timeout: number = 30000): Promise<EntityInfo> {
+    const search = nameOrId.toLowerCase();
+    
+    // Check if entity already exists
+    const existing = this.findEntity(search);
+    if (existing) {
+      return existing;
+    }
+
+    // Wait for entity to appear
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.off('entity', handler);
+        reject(
+          new ESPHomeError(
+            `Timeout waiting for entity: ${nameOrId}`,
+            'TIMEOUT' as any,
+            'Ensure the entity exists on the device and listEntities() has been called',
+            { nameOrId, timeout },
+          ),
+        );
+      }, timeout);
+
+      const handler = (entity: EntityInfo) => {
+        const matches =
+          entity.name.toLowerCase().includes(search) ||
+          entity.objectId.toLowerCase().includes(search) ||
+          entity.uniqueId?.toLowerCase().includes(search);
+
+        if (matches) {
+          clearTimeout(timer);
+          this.off('entity', handler);
+          resolve(entity);
+        }
+      };
+
+      this.on('entity', handler);
+    });
+  }
+
+  /**
+   * Get all entities
+   * @returns Array of all entities
+   */
+  getAllEntities(): EntityInfo[] {
+    return Array.from(this.entities.values());
+  }
+
+  /**
+   * Check if an entity exists
+   * @param key - Entity key or name
+   * @returns True if entity exists
+   */
+  hasEntity(key: number | string): boolean {
+    if (typeof key === 'number') {
+      return this.entities.has(key);
+    }
+    return this.findEntity(key) !== undefined;
+  }
+
+  /**
+   * Get entity count
+   * @returns Total number of entities
+   */
+  getEntityCount(): number {
+    return this.entities.size;
+  }
+
+  /**
+   * Get entities by category
+   * @param category - Entity category (NONE, CONFIG, DIAGNOSTIC)
+   * @returns Array of entities in the specified category
+   */
+  getEntitiesByCategory(category: number): EntityInfo[] {
+    const entities = Array.from(this.entities.values());
+    return entities.filter((entity) => entity.entityCategory === category);
+  }
+
+  /**
    * Switch command
    */
   async switchCommand(key: number, state: boolean): Promise<void> {
@@ -668,5 +819,91 @@ export class ESPHomeClient extends EventEmitter<ClientEvents> {
    */
   isAuthenticated(): boolean {
     return this.connection.isAuthenticated();
+  }
+
+  /**
+   * Get connection health metrics
+   * @returns Health metrics including latency, uptime, and message counts
+   */
+  getHealthMetrics() {
+    if ('getHealthMetrics' in this.connection) {
+      return (this.connection as any).getHealthMetrics();
+    }
+    return undefined;
+  }
+
+  /**
+   * Get connection health status with analysis
+   * @returns Health status with metrics, status indicator, and identified issues
+   */
+  getConnectionHealth() {
+    if ('getConnectionHealth' in this.connection) {
+      return (this.connection as any).getConnectionHealth();
+    }
+    return undefined;
+  }
+
+  /**
+   * Reset health metrics counters
+   */
+  resetHealthMetrics(): void {
+    if ('resetHealthMetrics' in this.connection) {
+      (this.connection as any).resetHealthMetrics();
+    }
+  }
+
+  /**
+   * Enable detailed logging
+   * Sets DEBUG environment variable for this instance
+   */
+  enableDetailedLogging(): void {
+    // Store original debug value
+    if (typeof process !== 'undefined' && process.env) {
+      process.env['DEBUG'] = 'esphome:*';
+      debug('Detailed logging enabled');
+    } else {
+      debug('Detailed logging could not be enabled');
+    }
+  }
+
+  /**
+   * Get connection metrics for debugging
+   * @returns Object containing connection statistics
+   */
+  getConnectionMetrics() {
+    const health = this.getHealthMetrics();
+    const state = this.connection.getState();
+    
+    return {
+      state,
+      health,
+      entityCount: this.entities.size,
+      subscriptions: {
+        states: this.stateSubscriptions.size,
+        logs: this.logSubscriptions.size,
+      },
+    };
+  }
+
+  /**
+   * Capture protocol dump to console
+   * Useful for debugging protocol issues
+   * @param enable - Enable or disable protocol dumping
+   */
+  captureProtocolDump(enable: boolean = true): void {
+    if (enable) {
+      debug('Protocol dump enabled - all messages will be logged');
+      // Hook into message events
+      const conn = this.connection as any;
+      conn.on('message', (msg: any) => {
+        console.log('PROTOCOL DUMP:', {
+          type: msg.type,
+          data: msg.data,
+          timestamp: Date.now(),
+        });
+      });
+    } else {
+      debug('Protocol dump disabled');
+    }
   }
 }

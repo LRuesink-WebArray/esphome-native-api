@@ -26,10 +26,17 @@ export {
   // Connection types
   ConnectionOptions,
   ConnectionState,
+  HealthMetrics,
+  ConnectionHealth,
+  
+  // Error types
+  ErrorCode,
+  ESPHomeError,
   ConnectionError,
   AuthenticationError,
   ProtocolError,
-  ESPHomeError,
+  EntityError,
+  TimeoutError,
 
   // Device types
   DeviceInfo,
@@ -57,12 +64,43 @@ export {
   // Log types
   LogEntry,
   LogLevel,
+  LOG_LEVEL_NONE,
+  LOG_LEVEL_ERROR,
+  LOG_LEVEL_WARN,
+  LOG_LEVEL_INFO,
+  LOG_LEVEL_CONFIG,
+  LOG_LEVEL_DEBUG,
+  LOG_LEVEL_VERBOSE,
+  LOG_LEVEL_VERY_VERBOSE,
   Logger, // Custom logger interface
   TimerFactory, // Custom timer interface
 
   // Message types
   MessageType,
   MessageHandler,
+  
+  // TypeScript utility types
+  EntityType,
+  EntityTypeMap,
+  EntityStateMap,
+  EntityInfoByType,
+  EntityStateByType,
+  isEntityType,
+  EntitiesOfType,
+  StrictConnectionOptions,
+  EntityKeys,
+  RequiredKeys,
+  OmitStrict,
+  DeepPartial,
+  DeepReadonly,
+  Awaited,
+  NonNullableFields,
+  EntityWithType,
+  AnyEntity,
+  isConnected,
+  isAuthenticated,
+  ALL_ENTITY_TYPES,
+  isValidEntityType,
 } from './types';
 
 // Re-export commonly used functions

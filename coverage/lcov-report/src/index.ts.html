@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/31</span>
+                <span class='fraction'>0/34</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/22</span>
+                <span class='fraction'>0/24</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/25</span>
+                <span class='fraction'>0/26</span>
             </div>
         
             
@@ -142,7 +142,12 @@
 <a name='L77'></a><a href='#L77'>77</a>
 <a name='L78'></a><a href='#L78'>78</a>
 <a name='L79'></a><a href='#L79'>79</a>
-<a name='L80'></a><a href='#L80'>80</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -203,6 +208,8 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -218,6 +225,9 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -253,11 +263,11 @@ export type { DiscoveryEvents } from './discovery/discovery';
 <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >  AuthenticationError,</span></span>
 <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >  ProtocolError,</span></span>
 <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >  ESPHomeError,</span></span>
-  
+&nbsp;
   // Device types
   DeviceInfo,
   DiscoveredDevice,
-  
+&nbsp;
   // Entity types
   EntityInfo,
 <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >  EntityCategory,</span></span>
@@ -265,7 +275,7 @@ export type { DiscoveryEvents } from './discovery/discovery';
   SensorInfo,
   SwitchInfo,
   LightInfo,
-  
+&nbsp;
   // State types
   StateUpdate,
   BinarySensorState,
@@ -273,30 +283,35 @@ export type { DiscoveryEvents } from './discovery/discovery';
   SwitchState,
   TextSensorState,
 <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >  StateClass,</span></span>
-  
+&nbsp;
   // Service types
   ServiceCall,
-  
+&nbsp;
   // Log types
   LogEntry,
 <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >  LogLevel,</span></span>
-  
+  Logger, // Custom logger interface
+  TimerFactory, // Custom timer interface
+&nbsp;
   // Message types
 <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >  MessageType,</span></span>
   MessageHandler,
 } from './types';
 &nbsp;
 // Re-export commonly used functions
-<span class="cstat-no" title="statement not covered" >export { </span>
-<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >  createClient, </span></span>
+<span class="cstat-no" title="statement not covered" >export {</span>
+<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >  createClient,</span></span>
 <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >  discover,</span></span>
 <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >  connectToFirstDevice,</span></span>
 <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >  formatMacAddress,</span></span>
 <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >  parseVersion,</span></span>
 <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >  retryWithBackoff,</span></span>
 <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >  sleep,</span></span>
-<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >  timeout</span></span>
+<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >  timeout,</span></span>
 } from './utils/helpers';
+&nbsp;
+// Logger utilities
+<span class="cstat-no" title="statement not covered" >export { <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >c</span>reateLogger,</span> <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >s</span>etupGlobalLogger </span>} from './utils/logger';</span>
 &nbsp;
 // Export proto definitions
 <span class="cstat-no" title="statement not covered" >export * as proto from './proto';</span>
@@ -307,7 +322,7 @@ export type { DiscoveryEvents } from './discovery/discovery';
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-04T11:53:10.310Z
+                at 2025-10-04T16:11:29.712Z
             </div>
         <script src="../prettify.js"></script>
         <script>

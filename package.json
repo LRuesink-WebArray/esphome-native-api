@@ -10,7 +10,8 @@
   "scripts": {
     "build": "tsc && npm run copy-proto",
     "copy-proto": "cp src/proto/api.js dist/proto/ && cp src/proto/api.d.ts dist/proto/",
-    "proto:generate": "node scripts/generate-proto.js",
+    "proto:generate": "node scripts/generate-proto.js && node scripts/generate-entity-types.js",
+    "generate:entity-types": "node scripts/generate-entity-types.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

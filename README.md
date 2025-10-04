@@ -1,5 +1,13 @@
 # ESPHome Native API for Node.js
 
+[![npm version](https://img.shields.io/npm/v/@webarray/esphome-native-api.svg)](https://www.npmjs.com/package/@webarray/esphome-native-api)
+[![npm downloads](https://img.shields.io/npm/dm/@webarray/esphome-native-api.svg)](https://www.npmjs.com/package/@webarray/esphome-native-api)
+[![CI](https://github.com/lruesink/esphomeapi/actions/workflows/ci.yml/badge.svg)](https://github.com/lruesink/esphomeapi/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/lruesink/esphomeapi/branch/main/graph/badge.svg)](https://codecov.io/gh/lruesink/esphomeapi)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue.svg)](https://www.typescriptlang.org/)
+[![Node](https://img.shields.io/badge/Node-%3E%3D16.0.0-green.svg)](https://nodejs.org/)
+
 A TypeScript/Node.js implementation of the ESPHome native API protocol. This library allows you to interact with ESPHome devices directly from Node.js applications.
 
 ## Features
@@ -8,11 +16,15 @@ A TypeScript/Node.js implementation of the ESPHome native API protocol. This lib
 - **Automatic Reconnection** - Robust connection handling with automatic reconnection on network issues
 - **Event-Driven Architecture** - Uses EventEmitter pattern for real-time state updates
 - **Device Discovery** - Automatic discovery of ESPHome devices on your network using mDNS
-- **TypeScript Support** - Full TypeScript support with comprehensive type definitions
+- **TypeScript Support** - Full TypeScript support with comprehensive type definitions and utility types
 - **High Performance** - Efficient binary protocol handling with protobuf
 - **Well Tested** - Comprehensive test suite ensuring reliability
 - **Flexible Logging** - Built-in debug logging with optional custom logger integration (Winston, Pino, etc.)
 - **Custom Timer Support** - Optional timer factory for platforms like Homey that require custom timer handling
+- **Connection Health Monitoring** - Built-in health metrics and connection diagnostics
+- **Enhanced Error Handling** - Detailed error messages with codes and helpful suggestions
+- **Entity Helper Methods** - Convenient methods to search, filter, and manage entities
+- **Debug Utilities** - Built-in debugging tools for troubleshooting
 
 ## Requirements
 
@@ -106,12 +118,35 @@ client.on('logs', (log) => {
 });
 
 await client.connect();
+```
 
-// Subscribe to receive state updates
-client.subscribeStates();
+### Logging
 
-// Subscribe to logs
-client.subscribeLogs(3); // Log level: 0=NONE, 1=ERROR, 2=WARN, 3=INFO, etc.
+Subscribe to device logs using log level constants:
+
+```typescript
+import { ESPHomeClient, LogLevel, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG } from 'esphome-native-api';
+
+const client = new ESPHomeClient({ host: 'device.local' });
+
+// Using enum
+client.subscribeLogs(LogLevel.INFO);
+
+// Using constants (easier to import)
+client.subscribeLogs(LOG_LEVEL_DEBUG);
+
+// Using numeric value (also supported)
+client.subscribeLogs(3); // INFO level
+
+// Available log levels:
+// LOG_LEVEL_NONE (0)         - No logging
+// LOG_LEVEL_ERROR (1)        - Errors only
+// LOG_LEVEL_WARN (2)         - Warnings and errors
+// LOG_LEVEL_INFO (3)         - Info, warnings, and errors (default)
+// LOG_LEVEL_CONFIG (4)       - Configuration messages
+// LOG_LEVEL_DEBUG (5)        - Debug messages
+// LOG_LEVEL_VERBOSE (6)      - Verbose debug
+// LOG_LEVEL_VERY_VERBOSE (7) - All messages
 ```
 
 ### List All Entities
@@ -377,6 +412,114 @@ const client = new ESPHomeClient({
 
 See `examples/custom-logging-example.js` for more integration examples.
 
+## Connection Health Monitoring
+
+Monitor connection health and performance metrics:
+
+```typescript
+import { ESPHomeClient } from 'esphome-native-api';
+
+const client = new ESPHomeClient({
+  host: '192.168.1.100',
+});
+
+await client.connect();
+
+// Get health metrics
+const metrics = client.getHealthMetrics();
+console.log('Connection uptime:', metrics.connectionUptime);
+console.log('Messages sent:', metrics.messagesSent);
+console.log('Average ping latency:', metrics.averagePingLatency);
+
+// Get health status with analysis
+const health = client.getConnectionHealth();
+console.log('Status:', health.status); // 'healthy', 'degraded', 'unhealthy', or 'disconnected'
+console.log('Issues:', health.issues); // Array of identified issues
+
+// Reset metrics
+client.resetHealthMetrics();
+```
+
+## Entity Helper Methods
+
+Convenient methods for working with entities:
+
+```typescript
+// Find entities by name
+const tempSensor = client.findEntity('temperature');
+
+// Find all entities matching a search
+const sensors = client.findEntities('sensor');
+
+// Get entities by type
+const allSwitches = client.getEntitiesByType('switch');
+
+// Check if entity exists
+if (client.hasEntity('light_living_room')) {
+  // ...
+}
+
+// Wait for an entity to appear
+const entity = await client.waitForEntity('new_sensor', 30000);
+
+// Get entity count
+console.log('Total entities:', client.getEntityCount());
+```
+
+## Debug Utilities
+
+Built-in debugging tools:
+
+```typescript
+import { ESPHomeClient } from 'esphome-native-api';
+
+const client = new ESPHomeClient({
+  host: '192.168.1.100',
+});
+
+// Enable detailed logging
+client.enableDetailedLogging();
+
+// Get connection metrics for debugging
+const metrics = client.getConnectionMetrics();
+console.log(metrics);
+
+// Capture protocol messages
+client.captureProtocolDump(true);
+```
+
+## Enhanced Error Handling
+
+Detailed error messages with codes and suggestions:
+
+```typescript
+import { 
+  ESPHomeClient,
+  ErrorCode,
+  ConnectionError,
+  AuthenticationError 
+} from 'esphome-native-api';
+
+try {
+  await client.connect();
+} catch (error) {
+  if (error instanceof AuthenticationError) {
+    console.error('Error code:', error.code);
+    console.error('Suggestion:', error.suggestion);
+    console.error('Context:', error.context);
+  } else if (error instanceof ConnectionError) {
+    switch (error.code) {
+      case ErrorCode.CONNECTION_TIMEOUT:
+        console.error('Connection timed out');
+        break;
+      case ErrorCode.CONNECTION_REFUSED:
+        console.error('Connection refused');
+        break;
+    }
+  }
+}
+```
+
 ## Custom Timer Implementations
 
 For environments that require custom timer handling (like Athom Homey), you can provide a `timerFactory`:
@@ -437,6 +580,36 @@ This automatically:
 - Fixes the `void` keyword conflict (ESPHome uses `void` as a message name)
 
 See `proto/README.md` for more details.
+
+## Auto-Generated Entity Types
+
+Entity types are automatically generated from ESPHome's proto files, ensuring the library stays in sync with ESPHome updates:
+
+```typescript
+import { ALL_ENTITY_TYPES, isValidEntityType, EntityType } from 'esphome-native-api';
+
+// All entity types from proto files
+console.log(ALL_ENTITY_TYPES);
+// ['binary_sensor', 'sensor', 'switch', 'light', ...]
+
+// Type guard for runtime validation
+if (isValidEntityType(someString)) {
+  // TypeScript knows someString is EntityType
+  const type: EntityType = someString;
+}
+```
+
+**Regenerating entity types:**
+
+When ESPHome updates its proto files, run:
+
+```bash
+npm run proto:generate  # Regenerates proto files AND entity types
+# or
+npm run generate:entity-types  # Only regenerates entity types
+```
+
+The entity types in `src/types/generated-entity-types.ts` are automatically generated from `proto/api.proto` by parsing all `ListEntities*Response` messages.
 
 ## Contributing
 

@@ -15,6 +15,8 @@ import {
   ConnectionError,
   ProtocolError,
   TimerFactory,
+  HealthMetrics,
+  ConnectionHealth,
 } from '../types';
 
 const debug = createDebug('esphome:connection');
@@ -46,6 +48,19 @@ export class Connection extends EventEmitter<ConnectionEvents> {
   private isDestroyed = false;
   private expectedDisconnect = false;
   private hasDeepSleep = false;
+
+  // Health monitoring metrics
+  private healthMetrics: HealthMetrics = {
+    isConnected: false,
+    isAuthenticated: false,
+    reconnectCount: 0,
+    messagesSent: 0,
+    messagesReceived: 0,
+    bytesReceived: 0,
+    bytesSent: 0,
+  };
+  private pingLatencies: number[] = [];
+  private readonly maxLatencySamples = 10;
 
   constructor(options: ConnectionOptions) {
     super();
@@ -134,6 +149,7 @@ export class Connection extends EventEmitter<ConnectionEvents> {
         this.socket = socket;
         this.setupSocketHandlers();
         this.updateState({ connected: true, authenticated: false });
+        this.updateHealthOnConnect();
         this.startPingTimer();
         this.emit('connect');
         resolve();
@@ -157,6 +173,7 @@ export class Connection extends EventEmitter<ConnectionEvents> {
 
     this.socket.on('data', (data: Buffer) => {
       try {
+        this.updateHealthOnMessageReceived(data.length);
         const messages = this.protocol.addData(data);
         for (const message of messages) {
           debug('Received message type %d', message.type);
@@ -177,6 +194,7 @@ export class Connection extends EventEmitter<ConnectionEvents> {
 
     this.socket.on('close', () => {
       debug('Socket closed');
+      this.updateHealthOnDisconnect('socket closed');
       this.handleDisconnect();
     });
 
@@ -219,8 +237,9 @@ export class Connection extends EventEmitter<ConnectionEvents> {
       throw new ConnectionError('Not connected');
     }
 
-    const frame = this.protocol.encodeMessage(type, data);
-    this.socket.write(frame);
+    const message = this.protocol.encodeMessage(type, data);
+    this.socket.write(message);
+    this.updateHealthOnMessageSent(message.length);
     debug('Sent message type %d, %d bytes', type, data.length);
   }
 
@@ -301,26 +320,12 @@ export class Connection extends EventEmitter<ConnectionEvents> {
       try {
         await this.connect();
         this.isReconnecting = false;
+        this.healthMetrics.reconnectCount++;
       } catch (error) {
-        debug('Reconnection failed: %s', error);
-        this.isReconnecting = false;
+        debug('Reconnect failed: %s', error);
         this.scheduleReconnect();
       }
     }, this.options.reconnectInterval);
-  }
-
-  /**
-   * Enable deep sleep mode for this connection
-   */
-  setDeepSleepMode(enabled: boolean): void {
-    this.hasDeepSleep = enabled;
-    debug('Deep sleep mode %s', enabled ? 'enabled' : 'disabled');
-
-    if (enabled && this.state.connected) {
-      // If already connected and deep sleep is enabled, stop pinging
-      this.stopPingTimer();
-      debug('Stopped ping timer for deep sleep device');
-    }
   }
 
   /**
@@ -350,6 +355,7 @@ export class Connection extends EventEmitter<ConnectionEvents> {
 
       debug('Sending ping');
       try {
+        this.updateHealthOnPing();
         this.sendMessage(MessageType.PingRequest, Buffer.alloc(0));
         this.startPingTimeoutTimer();
       } catch (error) {
@@ -377,6 +383,7 @@ export class Connection extends EventEmitter<ConnectionEvents> {
    */
   private handlePongResponse(): void {
     debug('Received pong');
+    this.updateHealthOnPong();
     this.stopPingTimeoutTimer();
   }
 
@@ -484,5 +491,181 @@ export class Connection extends EventEmitter<ConnectionEvents> {
    */
   setServerInfo(info: string): void {
     this.updateState({ serverInfo: info });
+  }
+
+  /**
+   * Enable/disable deep sleep mode
+   */
+  setDeepSleepMode(enabled: boolean): void {
+    this.hasDeepSleep = enabled;
+    debug('Deep sleep mode %s', enabled ? 'enabled' : 'disabled');
+  }
+
+  /**
+   * Get health metrics
+   */
+  getHealthMetrics(): HealthMetrics {
+    const now = Date.now();
+    const uptime = this.healthMetrics.connectionEstablishedAt
+      ? now - this.healthMetrics.connectionEstablishedAt
+      : undefined;
+
+    return {
+      ...this.healthMetrics,
+      isConnected: this.state.connected,
+      isAuthenticated: this.state.authenticated,
+      connectionUptime: uptime,
+      averagePingLatency: this.calculateAveragePingLatency(),
+    };
+  }
+
+  /**
+   * Get connection health status
+   */
+  getConnectionHealth(): ConnectionHealth {
+    const metrics = this.getHealthMetrics();
+    const issues: string[] = [];
+    let status: ConnectionHealth['status'] = 'healthy';
+
+    if (!metrics.isConnected) {
+      status = 'disconnected';
+      issues.push('Not connected to device');
+    } else {
+      // Check ping latency
+      if (metrics.averagePingLatency !== undefined) {
+        if (metrics.averagePingLatency > 1000) {
+          status = 'unhealthy';
+          issues.push(`High ping latency: ${metrics.averagePingLatency.toFixed(0)}ms`);
+        } else if (metrics.averagePingLatency > 500) {
+          if (status === 'healthy') {
+            status = 'degraded';
+          }
+          issues.push(`Elevated ping latency: ${metrics.averagePingLatency.toFixed(0)}ms`);
+        }
+      }
+
+      // Check if ping is overdue
+      if (
+        !this.hasDeepSleep &&
+        this.options.pingInterval > 0 &&
+        metrics.lastPingTime &&
+        metrics.lastPongTime
+      ) {
+        const timeSinceLastPong = Date.now() - metrics.lastPongTime;
+        if (timeSinceLastPong > this.options.pingInterval * 2) {
+          status = 'unhealthy';
+          issues.push(`No pong received in ${(timeSinceLastPong / 1000).toFixed(1)}s`);
+        }
+      }
+
+      // Check authentication
+      if (!metrics.isAuthenticated) {
+        if (status === 'healthy') {
+          status = 'degraded';
+        }
+        issues.push('Not authenticated');
+      }
+
+      // Check reconnect count
+      if (metrics.reconnectCount > 5) {
+        if (status === 'healthy') {
+          status = 'degraded';
+        }
+        issues.push(`High reconnect count: ${metrics.reconnectCount}`);
+      }
+    }
+
+    return { status, metrics, issues };
+  }
+
+  /**
+   * Reset health metrics
+   */
+  resetHealthMetrics(): void {
+    this.healthMetrics = {
+      isConnected: this.state.connected,
+      isAuthenticated: this.state.authenticated,
+      reconnectCount: 0,
+      messagesSent: 0,
+      messagesReceived: 0,
+      bytesReceived: 0,
+      bytesSent: 0,
+    };
+    this.pingLatencies = [];
+  }
+
+  /**
+   * Calculate average ping latency
+   */
+  private calculateAveragePingLatency(): number | undefined {
+    if (this.pingLatencies.length === 0) {
+      return undefined;
+    }
+    const sum = this.pingLatencies.reduce((a, b) => a + b, 0);
+    return sum / this.pingLatencies.length;
+  }
+
+  /**
+   * Update health metrics on connect
+   */
+  private updateHealthOnConnect(): void {
+    this.healthMetrics.isConnected = true;
+    this.healthMetrics.connectionEstablishedAt = Date.now();
+    this.healthMetrics.lastDisconnectTime = undefined;
+    this.healthMetrics.lastDisconnectReason = undefined;
+  }
+
+  /**
+   * Update health metrics on disconnect
+   */
+  private updateHealthOnDisconnect(reason?: string): void {
+    this.healthMetrics.isConnected = false;
+    this.healthMetrics.isAuthenticated = false;
+    this.healthMetrics.lastDisconnectTime = Date.now();
+    this.healthMetrics.lastDisconnectReason = reason;
+    this.healthMetrics.connectionUptime = undefined;
+    this.pingLatencies = [];
+  }
+
+  /**
+   * Update health metrics on ping/pong
+   */
+  private updateHealthOnPing(): void {
+    this.healthMetrics.lastPingTime = Date.now();
+  }
+
+  /**
+   * Update health metrics on pong received
+   */
+  private updateHealthOnPong(): void {
+    const now = Date.now();
+    this.healthMetrics.lastPongTime = now;
+
+    if (this.healthMetrics.lastPingTime) {
+      const latency = now - this.healthMetrics.lastPingTime;
+      this.healthMetrics.pingLatency = latency;
+
+      // Track latencies for average calculation
+      this.pingLatencies.push(latency);
+      if (this.pingLatencies.length > this.maxLatencySamples) {
+        this.pingLatencies.shift();
+      }
+    }
+  }
+
+  /**
+   * Update health metrics on message sent
+   */
+  private updateHealthOnMessageSent(bytes: number): void {
+    this.healthMetrics.messagesSent++;
+    this.healthMetrics.bytesSent += bytes;
+  }
+
+  /**
+   * Update health metrics on message received
+   */
+  private updateHealthOnMessageReceived(bytes: number): void {
+    this.healthMetrics.messagesReceived++;
+    this.healthMetrics.bytesReceived += bytes;
   }
 }
