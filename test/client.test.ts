@@ -435,4 +435,63 @@ describe('ESPHomeClient', () => {
       expect(state.authenticated).toBe(true);
     });
   });
+
+  describe('Custom Options', () => {
+    it('should accept custom logger option', () => {
+      const customLogger = jest.fn();
+      
+      const clientWithLogger = new ESPHomeClient({
+        host: '192.168.1.100',
+        logger: customLogger,
+      });
+
+      expect(clientWithLogger).toBeDefined();
+      clientWithLogger.destroy();
+    });
+
+    it('should accept custom timerFactory option', () => {
+      const customTimers = {
+        setTimeout: jest.fn((cb: any, ms: number) => setTimeout(cb, ms)),
+        setInterval: jest.fn((cb: any, ms: number) => setInterval(cb, ms)),
+        clearTimeout: jest.fn((id: any) => clearTimeout(id)),
+        clearInterval: jest.fn((id: any) => clearInterval(id)),
+      };
+
+      const clientWithTimers = new ESPHomeClient({
+        host: '192.168.1.100',
+        timerFactory: customTimers,
+      });
+
+      expect(clientWithTimers).toBeDefined();
+      clientWithTimers.destroy();
+    });
+
+    it('should accept both custom logger and timerFactory', () => {
+      const customLogger = jest.fn();
+      const customTimers = {
+        setTimeout: jest.fn((cb: any, ms: number) => setTimeout(cb, ms)),
+        setInterval: jest.fn((cb: any, ms: number) => setInterval(cb, ms)),
+        clearTimeout: jest.fn((id: any) => clearTimeout(id)),
+        clearInterval: jest.fn((id: any) => clearInterval(id)),
+      };
+
+      const clientWithBoth = new ESPHomeClient({
+        host: '192.168.1.100',
+        logger: customLogger,
+        timerFactory: customTimers,
+      });
+
+      expect(clientWithBoth).toBeDefined();
+      clientWithBoth.destroy();
+    });
+
+    it('should work without custom options (default behavior)', () => {
+      const defaultClient = new ESPHomeClient({
+        host: '192.168.1.100',
+      });
+
+      expect(defaultClient).toBeDefined();
+      defaultClient.destroy();
+    });
+  });
 });

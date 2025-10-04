@@ -14,6 +14,7 @@ import {
   MessageType,
   ConnectionError,
   ProtocolError,
+  TimerFactory,
 } from '../types';
 
 const debug = createDebug('esphome:connection');
@@ -33,10 +34,14 @@ export class Connection extends EventEmitter<ConnectionEvents> {
     connected: false,
     authenticated: false,
   };
-  private options: Required<ConnectionOptions>;
-  private reconnectTimer?: NodeJS.Timeout;
-  private pingTimer?: NodeJS.Timeout;
-  private pingTimeoutTimer?: NodeJS.Timeout;
+  private options: Required<Omit<ConnectionOptions, 'logger' | 'timerFactory'>> & { 
+    logger?: ConnectionOptions['logger'];
+    timerFactory?: ConnectionOptions['timerFactory'];
+  };
+  private timers: TimerFactory;
+  private reconnectTimer?: any;
+  private pingTimer?: any;
+  private pingTimeoutTimer?: any;
   private isReconnecting = false;
   private isDestroyed = false;
   private expectedDisconnect = false;
@@ -57,6 +62,16 @@ export class Connection extends EventEmitter<ConnectionEvents> {
       connectTimeout: options.connectTimeout || 10000,
       encryptionKey: options.encryptionKey || '',
       expectedServerName: options.expectedServerName || '',
+      logger: options.logger,
+      timerFactory: options.timerFactory,
+    };
+
+    // Setup timer factory (use custom or default to global timers)
+    this.timers = options.timerFactory || {
+      setTimeout: (cb, ms, ...args) => setTimeout(cb, ms, ...args),
+      setInterval: (cb, ms, ...args) => setInterval(cb, ms, ...args),
+      clearTimeout: (id) => clearTimeout(id),
+      clearInterval: (id) => clearInterval(id),
     };
 
     this.protocol = new ProtocolHandler();
@@ -107,25 +122,25 @@ export class Connection extends EventEmitter<ConnectionEvents> {
       this.cleanup();
 
       const socket = new Socket();
-      const connectTimeout = setTimeout(() => {
+      const connectTimeout = this.timers.setTimeout(() => {
         socket.destroy();
         reject(new ConnectionError('Connection timeout'));
       }, this.options.connectTimeout);
-      connectTimeout.unref();
+      if (connectTimeout.unref) connectTimeout.unref();
 
       socket.once('connect', () => {
-        clearTimeout(connectTimeout);
+        this.timers.clearTimeout(connectTimeout);
         debug('TCP connection established');
         this.socket = socket;
         this.setupSocketHandlers();
         this.updateState({ connected: true, authenticated: false });
-        this.emit('connect');
         this.startPingTimer();
+        this.emit('connect');
         resolve();
       });
 
       socket.once('error', (error) => {
-        clearTimeout(connectTimeout);
+        this.timers.clearTimeout(connectTimeout);
         debug('Socket error: %s', error.message);
         reject(new ConnectionError(`Socket error: ${error.message}`));
       });
@@ -279,7 +294,7 @@ export class Connection extends EventEmitter<ConnectionEvents> {
     debug('Scheduling reconnect in %dms', this.options.reconnectInterval);
     this.isReconnecting = true;
 
-    this.reconnectTimer = setTimeout(async () => {
+    this.reconnectTimer = this.timers.setTimeout(async () => {
       if (this.isDestroyed) return;
 
       debug('Attempting to reconnect');
@@ -327,7 +342,7 @@ export class Connection extends EventEmitter<ConnectionEvents> {
 
     this.stopPingTimer();
 
-    this.pingTimer = setInterval(() => {
+    this.pingTimer = this.timers.setInterval(() => {
       if (!this.state.connected) {
         this.stopPingTimer();
         return;
@@ -350,11 +365,11 @@ export class Connection extends EventEmitter<ConnectionEvents> {
   private startPingTimeoutTimer(): void {
     this.stopPingTimeoutTimer();
 
-    this.pingTimeoutTimer = setTimeout(() => {
+    this.pingTimeoutTimer = this.timers.setTimeout(() => {
       debug('Ping timeout');
       this.handleDisconnect();
     }, this.options.pingTimeout);
-    this.pingTimeoutTimer.unref();
+    if (this.pingTimeoutTimer.unref) this.pingTimeoutTimer.unref();
   }
 
   /**
@@ -370,7 +385,7 @@ export class Connection extends EventEmitter<ConnectionEvents> {
    */
   private stopPingTimer(): void {
     if (this.pingTimer) {
-      clearInterval(this.pingTimer);
+      this.timers.clearInterval(this.pingTimer);
       this.pingTimer = undefined;
     }
     this.stopPingTimeoutTimer();
@@ -381,7 +396,7 @@ export class Connection extends EventEmitter<ConnectionEvents> {
    */
   private stopPingTimeoutTimer(): void {
     if (this.pingTimeoutTimer) {
-      clearTimeout(this.pingTimeoutTimer);
+      this.timers.clearTimeout(this.pingTimeoutTimer);
       this.pingTimeoutTimer = undefined;
     }
   }
@@ -393,7 +408,7 @@ export class Connection extends EventEmitter<ConnectionEvents> {
     this.stopPingTimer();
 
     if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
+      this.timers.clearTimeout(this.reconnectTimer);
       this.reconnectTimer = undefined;
     }
 

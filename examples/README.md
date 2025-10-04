@@ -129,6 +129,48 @@ node examples/deep-sleep-example.js
 
 ---
 
+### 6. Custom Logging Example (`custom-logging-example.js`)
+
+**What it shows**: How to integrate with custom logging systems
+
+**Use this when**: You need custom logging (Winston, Pino, Bunyan, Homey, etc.)
+
+```bash
+node examples/custom-logging-example.js
+```
+
+**Important**: By default, the library uses the `debug` package automatically - no setup needed!
+```bash
+DEBUG=esphome:* node your-app.js  # Enable debug logs
+```
+
+**Methods shown**:
+1. **Per-client custom logger** - Most flexible (recommended)
+2. **Global logger setup** - Single setup for all clients  
+3. **Library integrations** - Winston, Pino, Bunyan examples
+4. **Filtered logging** - Control what gets logged
+5. **Multi-target** - Send to multiple destinations
+
+**Quick example**:
+```javascript
+const client = new ESPHomeClient({
+  host: '192.168.1.100',
+  logger: (namespace, message, ...args) => {
+    console.log(`[${namespace}] ${message}`, ...args);
+    // Or use your logging system: winston.info(), etc.
+  },
+  // For Homey: also provide custom timer factory
+  timerFactory: {
+    setTimeout: (callback, ms) => this.homey.setTimeout(callback, ms),
+    setInterval: (callback, ms) => this.homey.setInterval(callback, ms),
+    clearTimeout: (id) => this.homey.clearTimeout(id),
+    clearInterval: (id) => this.homey.clearInterval(id),
+  }
+});
+```
+
+---
+
 ## ESPHome Configuration
 
 Your ESPHome device needs the Native API component enabled:

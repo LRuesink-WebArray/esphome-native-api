@@ -57,6 +57,8 @@ export {
   // Log types
   LogEntry,
   LogLevel,
+  Logger,  // Custom logger interface
+  TimerFactory,  // Custom timer interface
 
   // Message types
   MessageType,
@@ -74,6 +76,9 @@ export {
   sleep,
   timeout,
 } from './utils/helpers';
+
+// Logger utilities
+export { createLogger, setupGlobalLogger } from './utils/logger';
 
 // Export proto definitions
 export * as proto from './proto';

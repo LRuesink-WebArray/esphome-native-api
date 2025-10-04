@@ -417,4 +417,162 @@ describe('Connection', () => {
       expect(connection.isConnected()).toBe(true);
     });
   });
+
+  describe('Custom Logger', () => {
+    it('should accept a custom logger function', () => {
+      const logMessages: any[] = [];
+      const customLogger = jest.fn((namespace: string, message: string, ...args: any[]) => {
+        logMessages.push({ namespace, message, args });
+      });
+
+      const conn = new Connection({
+        ...defaultOptions,
+        logger: customLogger,
+      });
+
+      expect(conn).toBeDefined();
+      conn.destroy();
+    });
+
+    it('should work without a custom logger (default behavior)', () => {
+      const conn = new Connection(defaultOptions);
+      expect(conn).toBeDefined();
+      conn.destroy();
+    });
+  });
+
+  describe('Custom Timer Factory', () => {
+    it('should use custom timer factory when provided', async () => {
+      const timerCalls: any[] = [];
+      const customTimers = {
+        setTimeout: jest.fn((callback: any, ms: number) => {
+          timerCalls.push({ type: 'setTimeout', ms });
+          return global.setTimeout(callback, ms);
+        }),
+        setInterval: jest.fn((callback: any, ms: number) => {
+          timerCalls.push({ type: 'setInterval', ms });
+          return global.setInterval(callback, ms);
+        }),
+        clearTimeout: jest.fn((id: any) => {
+          timerCalls.push({ type: 'clearTimeout' });
+          return global.clearTimeout(id);
+        }),
+        clearInterval: jest.fn((id: any) => {
+          timerCalls.push({ type: 'clearInterval' });
+          return global.clearInterval(id);
+        }),
+      };
+
+      const conn = new Connection({
+        ...defaultOptions,
+        timerFactory: customTimers,
+      });
+
+      await conn.connect();
+
+      // Should have called setTimeout for connection timeout
+      expect(customTimers.setTimeout).toHaveBeenCalled();
+      
+      // Should have called clearTimeout after successful connection
+      expect(customTimers.clearTimeout).toHaveBeenCalled();
+
+      // Should have called setInterval for ping timer
+      expect(customTimers.setInterval).toHaveBeenCalled();
+
+      conn.destroy();
+
+      // Should have called clearInterval when cleaning up
+      expect(customTimers.clearInterval).toHaveBeenCalled();
+    });
+
+    it('should work without custom timer factory (default behavior)', async () => {
+      const conn = new Connection(defaultOptions);
+      
+      await conn.connect();
+      expect(conn.isConnected()).toBe(true);
+
+      conn.destroy();
+    });
+
+    it('should handle timers without unref method', async () => {
+      const customTimers = {
+        setTimeout: jest.fn((callback: any, ms: number) => {
+          // Return a timer without unref method (like some custom implementations)
+          const id = global.setTimeout(callback, ms);
+          return { id, noUnref: true };
+        }),
+        setInterval: jest.fn((callback: any, ms: number) => {
+          return global.setInterval(callback, ms);
+        }),
+        clearTimeout: jest.fn((id: any) => {
+          if (id && typeof id === 'object' && id.id) {
+            global.clearTimeout(id.id);
+          }
+        }),
+        clearInterval: jest.fn((id: any) => {
+          global.clearInterval(id);
+        }),
+      };
+
+      const conn = new Connection({
+        ...defaultOptions,
+        timerFactory: customTimers,
+      });
+
+      // Should not throw even if timer doesn't have unref
+      await expect(conn.connect()).resolves.not.toThrow();
+
+      conn.destroy();
+    });
+
+    it('should use custom timers for reconnection', async () => {
+      const timerCalls: any[] = [];
+      const customTimers = {
+        setTimeout: jest.fn((callback: any, ms: number) => {
+          timerCalls.push({ type: 'setTimeout', ms });
+          return global.setTimeout(callback, ms);
+        }),
+        setInterval: jest.fn((callback: any, ms: number) => {
+          timerCalls.push({ type: 'setInterval', ms });
+          return global.setInterval(callback, ms);
+        }),
+        clearTimeout: jest.fn((id: any) => {
+          timerCalls.push({ type: 'clearTimeout' });
+          return global.clearTimeout(id);
+        }),
+        clearInterval: jest.fn((id: any) => {
+          timerCalls.push({ type: 'clearInterval' });
+          return global.clearInterval(id);
+        }),
+      };
+
+      const conn = new Connection({
+        ...defaultOptions,
+        reconnect: true,
+        reconnectInterval: 100,
+        timerFactory: customTimers,
+      });
+
+      await conn.connect();
+      
+      // Clear previous calls
+      customTimers.setTimeout.mockClear();
+      
+      // Simulate disconnect
+      const mockSocket = (Socket as any).mock.results[0].value;
+      mockSocket.emit('close');
+
+      // Wait a bit for reconnect timer to be set
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      // Should have called setTimeout for reconnection
+      expect(customTimers.setTimeout).toHaveBeenCalled();
+      const reconnectCall = customTimers.setTimeout.mock.calls.find(
+        (call: any) => call[1] === 100 // reconnectInterval
+      );
+      expect(reconnectCall).toBeDefined();
+
+      conn.destroy();
+    });
+  });
 });

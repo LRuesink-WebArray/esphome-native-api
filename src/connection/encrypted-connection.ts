@@ -18,6 +18,7 @@ export interface ConnectionOptions {
   connectTimeout?: number;
   encryptionKey?: string;
   expectedServerName?: string;
+  logger?: (namespace: string, message: string, ...args: any[]) => void;
 }
 
 export interface ConnectionState {
@@ -44,7 +45,7 @@ export class EncryptedConnection extends EventEmitter {
     connected: false,
     authenticated: false,
   };
-  private options: Required<ConnectionOptions>;
+  private options: Required<Omit<ConnectionOptions, 'logger'>> & { logger?: ConnectionOptions['logger'] };
   private isDestroyed = false;
 
   constructor(options: ConnectionOptions) {
@@ -61,6 +62,7 @@ export class EncryptedConnection extends EventEmitter {
       connectTimeout: options.connectTimeout || 10000,
       encryptionKey: options.encryptionKey || '',
       expectedServerName: options.expectedServerName || '',
+      logger: options.logger,
     };
     
     // Initialize noise encryption if key is provided

@@ -11,6 +11,8 @@ A TypeScript/Node.js implementation of the ESPHome native API protocol. This lib
 - **TypeScript Support** - Full TypeScript support with comprehensive type definitions
 - **High Performance** - Efficient binary protocol handling with protobuf
 - **Well Tested** - Comprehensive test suite ensuring reliability
+- **Flexible Logging** - Built-in debug logging with optional custom logger integration (Winston, Pino, etc.)
+- **Custom Timer Support** - Optional timer factory for platforms like Homey that require custom timer handling
 
 ## Requirements
 
@@ -55,6 +57,11 @@ await client.switchCommand(switchKey, true);
 
 // Disconnect when done
 client.disconnect();
+```
+
+**💡 Tip**: Enable debug logging to see what's happening:
+```bash
+DEBUG=esphome:* node your-app.js
 ```
 
 ### Device Discovery
@@ -288,6 +295,115 @@ try {
   }
 }
 ```
+
+## Logging
+
+The library uses the [debug](https://www.npmjs.com/package/debug) package for logging. By default, logging works automatically without any configuration.
+
+### Default Logging (No Setup Required)
+
+Simply set the `DEBUG` environment variable to enable logs:
+
+```bash
+# Enable all ESPHome logs
+DEBUG=esphome:* node your-app.js
+
+# Enable specific namespaces
+DEBUG=esphome:client node your-app.js
+DEBUG=esphome:connection node your-app.js
+DEBUG=esphome:discovery node your-app.js
+
+# Multiple namespaces
+DEBUG=esphome:client,esphome:connection node your-app.js
+```
+
+Available namespaces:
+- `esphome:client` - Client operations and events
+- `esphome:connection` - Connection management
+- `esphome:encrypted-connection` - Encrypted connections
+- `esphome:discovery` - Device discovery
+- `esphome:protocol` - Protocol messages
+- `esphome:noise` - Encryption details
+
+### Custom Logging
+
+For integration with custom logging systems (Winston, Pino, Bunyan, Homey, etc.), provide a custom logger function:
+
+```typescript
+import { ESPHomeClient } from 'esphome-native-api';
+
+const client = new ESPHomeClient({
+  host: '192.168.1.100',
+  
+  // Custom logger function
+  logger: (namespace, message, ...args) => {
+    // Use your logging system
+    winston.info({ namespace, message, args });
+    // Or: pino.info({ namespace, args }, message);
+    // Or: console.log(`[${namespace}] ${message}`, ...args);
+  }
+});
+```
+
+### Global Logger Setup
+
+To redirect all library logs to a custom logger:
+
+```typescript
+import { setupGlobalLogger } from 'esphome-native-api';
+
+setupGlobalLogger((message) => {
+  myLogger.info(message);
+});
+```
+
+### Example: Integration with Winston
+
+```typescript
+import winston from 'winston';
+import { ESPHomeClient } from 'esphome-native-api';
+
+const logger = winston.createLogger({
+  transports: [new winston.transports.Console()]
+});
+
+const client = new ESPHomeClient({
+  host: '192.168.1.100',
+  logger: (namespace, message, ...args) => {
+    logger.info({ namespace, args }, message);
+  }
+});
+```
+
+See `examples/custom-logging-example.js` for more integration examples.
+
+## Custom Timer Implementations
+
+For environments that require custom timer handling (like Athom Homey), you can provide a `timerFactory`:
+
+```typescript
+import { ESPHomeClient, TimerFactory } from 'esphome-native-api';
+
+// Example: Homey timer factory
+const homeyTimers: TimerFactory = {
+  setTimeout: (callback, ms) => this.homey.setTimeout(callback, ms),
+  setInterval: (callback, ms) => this.homey.setInterval(callback, ms),
+  clearTimeout: (id) => this.homey.clearTimeout(id),
+  clearInterval: (id) => this.homey.clearInterval(id),
+};
+
+const client = new ESPHomeClient({
+  host: '192.168.1.100',
+  timerFactory: homeyTimers,  // Use Homey's timer system
+});
+```
+
+This is useful for platforms where:
+- Timers need to be managed by a specific global object
+- You want to track or control all timers centrally
+- The environment has custom timer lifecycle requirements
+
+If not provided, the library uses Node.js's standard `setTimeout`/`setInterval`.
 
 ## Development
 

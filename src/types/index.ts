@@ -2,6 +2,24 @@
  * Core types for the ESPHome Native API
  */
 
+/**
+ * Custom logger interface for integrating with different logging systems
+ */
+export interface Logger {
+  (namespace: string, message: string, ...args: any[]): void;
+}
+
+/**
+ * Timer factory for custom timer implementations
+ * Useful for platforms like Homey that require custom timer handling
+ */
+export interface TimerFactory {
+  setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): any;
+  setInterval(callback: (...args: any[]) => void, ms: number, ...args: any[]): any;
+  clearTimeout(timeoutId: any): void;
+  clearInterval(intervalId: any): void;
+}
+
 export interface ConnectionOptions {
   host: string;
   port?: number;
@@ -14,6 +32,8 @@ export interface ConnectionOptions {
   connectTimeout?: number;
   encryptionKey?: string;
   expectedServerName?: string;
+  logger?: Logger;  // Custom logger function (e.g., for Homey integration)
+  timerFactory?: TimerFactory;  // Custom timer implementation (e.g., for Homey integration)
 }
 
 export interface DeviceInfo {
