@@ -36,18 +36,21 @@ jobs:
           DIFF_OUTPUT=""
           
           # Compare api.proto
-          if ! diff -u proto/api.proto temp_proto/api.proto > api_diff.txt; then
+          if ! diff -q proto/api.proto temp_proto/api.proto > /dev/null 2>&1; then
             echo "api.proto has changes"
             CHANGES_DETECTED=true
+            # Generate diff without showing temp_proto path in issue
+            diff -u proto/api.proto temp_proto/api.proto | sed 's|temp_proto/||g' > api_diff.txt || true
             DIFF_OUTPUT="${DIFF_OUTPUT}### api.proto changes:\n\`\`\`diff\n$(cat api_diff.txt)\n\`\`\`\n\n"
           else
             echo "api.proto is up to date"
           fi
           
           # Compare api_options.proto
-          if ! diff -u proto/api_options.proto temp_proto/api_options.proto > api_options_diff.txt; then
+          if ! diff -q proto/api_options.proto temp_proto/api_options.proto > /dev/null 2>&1; then
             echo "api_options.proto has changes"
             CHANGES_DETECTED=true
+            diff -u proto/api_options.proto temp_proto/api_options.proto | sed 's|temp_proto/||g' > api_options_diff.txt || true
             DIFF_OUTPUT="${DIFF_OUTPUT}### api_options.proto changes:\n\`\`\`diff\n$(cat api_options_diff.txt)\n\`\`\`\n\n"
           else
             echo "api_options.proto is up to date"
@@ -131,6 +134,11 @@ jobs:
               });
               console.log(`Created new issue #${issue.data.number}`);
             }
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -rf temp_proto api_diff.txt api_options_diff.txt diff_summary.txt
 
       - name: Summary
         if: always()
