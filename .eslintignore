@@ -1,0 +1,12 @@
+# Ignore generated files
+src/proto/api.js
+src/proto/api.d.ts
+dist/
+
+# Ignore test files (not part of published code)
+test/
+*.test.ts
+*.spec.ts
+
+# Ignore noise encryption (uses untyped WebAssembly library)
+src/connection/noise-encryption.ts
