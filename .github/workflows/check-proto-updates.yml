@@ -135,6 +135,53 @@ jobs:
               console.log(`Created new issue #${issue.data.number}`);
             }
 
+      - name: Close Issue if no changes detected
+        if: steps.compare.outputs.changes_detected == 'false'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            // Check if there's an open issue about proto updates
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'proto-update'
+            });
+            
+            const existingIssue = issues.data.find(issue => 
+              issue.title.includes('ESPHome Proto Files Update Available')
+            );
+            
+            if (existingIssue) {
+              // Close the issue with a comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `## ✅ Proto Files Up to Date
+                
+                The automated check has confirmed that the proto files are now up to date with ESPHome.
+                
+                Closing this issue automatically.
+                
+                ---
+                *Checked on ${new Date().toISOString().split('T')[0]} by the [Check Proto Updates](.github/workflows/check-proto-updates.yml) workflow.*
+                `
+              });
+              
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                state: 'closed'
+              });
+              
+              console.log(`Closed issue #${existingIssue.number} - proto files are up to date`);
+            } else {
+              console.log('No open proto-update issues found');
+            }
+
       - name: Cleanup
         if: always()
         run: |
@@ -147,5 +194,5 @@ jobs:
             echo "⚠️ Proto files are out of date! An issue has been created."
             echo "Please run 'npm run proto:generate' to update the proto files."
           else
-            echo "Proto files are up to date!"
+            echo "✅ Proto files are up to date!"
           fi
