@@ -1,0 +1,139 @@
+name: Check Proto Updates
+
+on:
+  schedule:
+    # Run at midnight UTC every day
+    - cron: '0 0 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  check-proto-updates:
+    name: Check for ESPHome Proto Updates
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download latest proto files from ESPHome
+        run: |
+          echo "Downloading latest proto files from ESPHome dev branch..."
+          mkdir -p temp_proto
+          curl -o temp_proto/api.proto https://raw.githubusercontent.com/esphome/esphome/dev/esphome/components/api/api.proto
+          curl -o temp_proto/api_options.proto https://raw.githubusercontent.com/esphome/esphome/dev/esphome/components/api/api_options.proto
+
+      - name: Compare proto files
+        id: compare
+        run: |
+          echo "Comparing proto files..."
+          
+          # Initialize variables
+          CHANGES_DETECTED=false
+          DIFF_OUTPUT=""
+          
+          # Compare api.proto
+          if ! diff -u proto/api.proto temp_proto/api.proto > api_diff.txt; then
+            echo "api.proto has changes"
+            CHANGES_DETECTED=true
+            DIFF_OUTPUT="${DIFF_OUTPUT}### api.proto changes:\n\`\`\`diff\n$(cat api_diff.txt)\n\`\`\`\n\n"
+          else
+            echo "api.proto is up to date"
+          fi
+          
+          # Compare api_options.proto
+          if ! diff -u proto/api_options.proto temp_proto/api_options.proto > api_options_diff.txt; then
+            echo "api_options.proto has changes"
+            CHANGES_DETECTED=true
+            DIFF_OUTPUT="${DIFF_OUTPUT}### api_options.proto changes:\n\`\`\`diff\n$(cat api_options_diff.txt)\n\`\`\`\n\n"
+          else
+            echo "api_options.proto is up to date"
+          fi
+          
+          # Save results for next step
+          echo "changes_detected=${CHANGES_DETECTED}" >> $GITHUB_OUTPUT
+          
+          # Save diff to file for issue creation
+          if [ "${CHANGES_DETECTED}" = "true" ]; then
+            echo -e "${DIFF_OUTPUT}" > diff_summary.txt
+          fi
+
+      - name: Create Issue if changes detected
+        if: steps.compare.outputs.changes_detected == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const fs = require('fs');
+            const diffSummary = fs.readFileSync('diff_summary.txt', 'utf8');
+            
+            // Check if there's already an open issue about proto updates
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'proto-update'
+            });
+            
+            const existingIssue = issues.data.find(issue => 
+              issue.title.includes('ESPHome Proto Files Update Available')
+            );
+            
+            const issueBody = `## ESPHome Proto Files Update Available
+            
+            The automated check has detected that ESPHome has updated their proto files on the \`dev\` branch.
+            
+            **Action needed:** Update the proto files by running:
+            \`\`\`bash
+            npm run proto:generate
+            npm run build
+            npm test
+            \`\`\`
+            
+            ## Changes Detected
+            
+            ${diffSummary}
+            
+            ## Next Steps
+            
+            1. Review the changes above
+            2. Run \`npm run proto:generate\` to update the proto files
+            3. Run \`npm test\` to ensure all tests pass
+            4. Commit and create a PR with the updated proto files
+            
+            ---
+            *This issue was automatically created by the [Check Proto Updates](.github/workflows/check-proto-updates.yml) workflow.*
+            `;
+            
+            if (existingIssue) {
+              // Update existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `## New Changes Detected (${new Date().toISOString().split('T')[0]})
+                
+                ${diffSummary}
+                `
+              });
+              console.log(`Updated existing issue #${existingIssue.number}`);
+            } else {
+              // Create new issue
+              const issue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '🔄 ESPHome Proto Files Update Available',
+                body: issueBody,
+                labels: ['proto-update', 'dependencies']
+              });
+              console.log(`Created new issue #${issue.data.number}`);
+            }
+
+      - name: Summary
+        if: always()
+        run: |
+          if [ "${{ steps.compare.outputs.changes_detected }}" = "true" ]; then
+            echo "⚠️ Proto files are out of date! An issue has been created."
+            echo "Please run 'npm run proto:generate' to update the proto files."
+          else
+            echo "Proto files are up to date!"
+          fi

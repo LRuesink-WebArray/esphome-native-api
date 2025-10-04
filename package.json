@@ -1,6 +1,6 @@
 {
   "name": "@webarray/esphome-native-api",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "TypeScript/Node.js client for ESPHome native API with encryption and deep sleep support",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
