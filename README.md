@@ -6,7 +6,7 @@
 [![codecov](https://codecov.io/gh/lruesink/esphomeapi/branch/main/graph/badge.svg)](https://codecov.io/gh/lruesink/esphomeapi)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue.svg)](https://www.typescriptlang.org/)
-[![Node](https://img.shields.io/badge/Node-%3E%3D16.0.0-green.svg)](https://nodejs.org/)
+[![Node](https://img.shields.io/badge/Node-%3E%3D18.0.0-green.svg)](https://nodejs.org/)
 
 A TypeScript/Node.js implementation of the ESPHome native API protocol. This library allows you to interact with ESPHome devices directly from Node.js applications.
 
@@ -28,7 +28,7 @@ A TypeScript/Node.js implementation of the ESPHome native API protocol. This lib
 
 ## Requirements
 
-- Node.js >= 16.0.0
+- Node.js >= 18.0.0
 - ESPHome device with Native API component enabled
 
 ## Installation
