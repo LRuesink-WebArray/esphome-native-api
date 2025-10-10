@@ -45,7 +45,7 @@
     "bonjour-service": "^1.2.1",
     "debug": "^4.3.4",
     "eventemitter3": "^5.0.1",
-    "p-retry": "^5.1.2",
+    "p-retry": "^7.1.0",
     "protobufjs": "^7.2.5",
     "varint": "^6.0.0"
   },
