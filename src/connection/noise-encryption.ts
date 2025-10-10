@@ -205,7 +205,7 @@ export class NoiseEncryption {
     if (this.handshakeState) {
       try {
         this.handshakeState.free();
-      } catch (e) {
+      } catch {
         // Ignore cleanup errors
       }
       this.handshakeState = null;
@@ -213,7 +213,7 @@ export class NoiseEncryption {
     if (this.sendCipher) {
       try {
         this.sendCipher.free();
-      } catch (e) {
+      } catch {
         // Ignore cleanup errors
       }
       this.sendCipher = null;
@@ -221,7 +221,7 @@ export class NoiseEncryption {
     if (this.receiveCipher) {
       try {
         this.receiveCipher.free();
-      } catch (e) {
+      } catch {
         // Ignore cleanup errors
       }
       this.receiveCipher = null;

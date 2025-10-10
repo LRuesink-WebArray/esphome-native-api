@@ -93,7 +93,7 @@ export class ProtocolHandler {
     try {
       lengthValue = varint.decode(this.buffer, 1);
       lengthBytes = varint.decode.bytes || 0;
-    } catch (err) {
+    } catch {
       // Not enough bytes for length varint
       return null;
     }
@@ -115,7 +115,7 @@ export class ProtocolHandler {
     try {
       typeValue = varint.decode(this.buffer, typeOffset);
       typeBytes = varint.decode.bytes || 0;
-    } catch (err) {
+    } catch {
       // Not enough bytes for type varint
       return null;
     }

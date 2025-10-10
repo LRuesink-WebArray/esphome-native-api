@@ -8,6 +8,7 @@ import createDebug from 'debug';
 import { Connection } from '../connection/connection';
 import { EncryptedConnection } from '../connection/encrypted-connection';
 import { DecodedMessage } from '../utils/protocol';
+import * as api from '../proto/api';
 import {
   ConnectionOptions,
   DeviceInfo,
@@ -756,9 +757,7 @@ export class ESPHomeClient extends EventEmitter<ClientEvents> {
    */
   private encodeMessage(type: string, data: any): Buffer {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const api = require('../proto/api');
-      const MessageClass = api[type];
+      const MessageClass = (api as any)[type];
 
       if (!MessageClass || !MessageClass.encode) {
         debug('Unknown message type: %s', type);
@@ -779,9 +778,7 @@ export class ESPHomeClient extends EventEmitter<ClientEvents> {
    */
   private decodeMessage(type: string, data: Buffer): any {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const api = require('../proto/api');
-      const MessageClass = api[type];
+      const MessageClass = (api as any)[type];
 
       if (!MessageClass || !MessageClass.decode) {
         debug('Unknown message type: %s', type);

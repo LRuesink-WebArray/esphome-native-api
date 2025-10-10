@@ -117,8 +117,8 @@ export class Connection extends EventEmitter<ConnectionEvents> {
           retries: this.options.reconnect ? 3 : 0,
           minTimeout: 1000,
           maxTimeout: 5000,
-          onFailedAttempt: (error) => {
-            debug('Connection attempt %d failed: %s', error.attemptNumber, error.message);
+          onFailedAttempt: (context) => {
+            debug('Connection attempt %d failed: %s', context.attemptNumber, context.error.message);
           },
         },
       );
